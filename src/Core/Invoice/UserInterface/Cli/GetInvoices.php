@@ -24,9 +24,18 @@ class GetInvoices extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $status = $input->getArgument('status');
+        $amount = (int) $input->getArgument('amount');
+
         $invoices = $this->bus->dispatch(new GetInvoicesByStatusAndAmountGreaterQuery(
-            $input->getArgument('amount')
+            $amount,
+            $status
         ));
+
+        if (empty($invoices)) {
+            $output->writeln('Brak faktur spełniających podane kryteria.');
+            return Command::SUCCESS;
+        }
 
         /** @var InvoiceDTO $invoice */
         foreach ($invoices as $invoice) {
@@ -38,7 +47,7 @@ class GetInvoices extends Command
 
     protected function configure(): void
     {
-        $this->addArgument('status', InputArgument::REQUIRED);
-        $this->addArgument('amount', InputArgument::REQUIRED);
+        $this->addArgument('status', InputArgument::REQUIRED, 'Status faktury (np. new, paid, canceled)');
+        $this->addArgument('amount', InputArgument::REQUIRED, 'Minimalna kwota faktury w groszach');
     }
 }
